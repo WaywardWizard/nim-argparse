@@ -96,21 +96,31 @@ import strutils
 import argparse/backend; export backend
 import argparse/macrohelp; export macrohelp
 
-proc longAndShort(name1: string, name2: string): tuple[long: string, short: string] =
-  ## Given two strings, return the longer and shorter of the two with
-  ## shortname possibly being empty.
+proc longAndShortFlag(name1: string, name2: string): tuple[long: string, short: string] =
+  ## Extract --long and -short flag names from the two provided names
+  ## Both short, or long, is not allowed
+  ## Short may be empty, long may be empty, but not both
+  ## Flags matching "^--(-)+", "^--?$", are not allowed
   var
-    longname: string
-    shortname: string
-  if name2 == "":
-    longname = name1
-  else:
-    if name1.len > name2.len:
-      longname = name1
-      shortname = name2
+    n1,n2,longname,shortname: string
+  n1=strip(name1)
+  n2=strip(name2)
+  echo n1,n2
+  doUsageAssert( n1&n2 != "", "At least one flag must be provided")
+  for n in [n1,n2]:
+    if n=="": continue
+    doUsageAssert(n.startsWith("-"), "Flag not valid, must start with -")
+    if n.startsWith("--"):
+      doUsageAssert(n.len>2, "Long flag missing name: '%s'" % n)
+      doUsageAssert(n[2] != '-', "Long flag has excess dashes: '%s'" % n)
+      doUsageAssert(longname=="",
+        "Multiple long flags provided: '%s' and '%s'" % [longname, n])
+      longname=n
     else:
-      longname = name2
-      shortname = name1
+      doUsageAssert(n.len>1, "Short flag missing name: '%s'" % n)
+      doUsageAssert(shortname=="",
+        "Multiple short flags provided: '%s' and '%s'" % [shortname, n])
+      shortname=n
   return (longname, shortname)
 
 template newParser*(name: string, body: untyped): untyped =
@@ -167,7 +177,7 @@ proc flag*(name1: string, name2 = "", multiple = false, help = "", hidden = fals
     assert opts.a == false
     assert opts.dryrun == true
 
-  let names = longAndShort(name1, name2)
+  let names = longAndShortFlag(name1, name2)
   let varname = names.long.toVarname()
   builderStack[^1].components.add Component(
     kind: ArgFlag,
@@ -212,7 +222,7 @@ proc option*(name1: string, name2 = "", help = "", default = none[string](), env
     assert p.parse(@[]).apple_opt.isNone
     assert p.parse(@["--apple", "6"]).apple_opt.get() == "6"
 
-  let names = longAndShort(name1, name2)
+  let names = longAndShortFlag(name1, name2)
   let varname = names.long.toVarname()
   builderStack[^1].components.add Component(
     kind: ArgOption,
