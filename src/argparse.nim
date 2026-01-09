@@ -91,8 +91,8 @@ runnableExamples:
   assert opts.go.get.a == true
   assert opts.leave.isNone
 
-import std/macros
-import strutils
+import std/[macros,strutils,sequtils]
+import argparse/types
 import argparse/backend; export backend
 import argparse/macrohelp; export macrohelp
 
@@ -200,6 +200,15 @@ proc option*(name1: string, name2 = "", help = "", default = none[string](), env
   ## Add an option to the argument parser.  The (--) long flag, and if not
   ## present the (-) short flag will be used as the name on the parsed result.
   ##
+proc option*(name1: string, name2 = "", help = "",
+  default = none[string](), env = "", multiple = false,
+  choices: seq[string] = @[],
+  completionsGenerator= default(array[ShellCompletionKind,string]),
+  required = false, hidden = false) {.compileTime.} =
+  ## Add an option to the argument parser.  The longest
+  ## named flag will be used as the name on the parsed
+  ## result.
+  ## 
   ## Additionally, an ``Option[string]`` named ``FLAGNAME_opt``
   ## will be available on the parse result.
   ##
@@ -213,7 +222,13 @@ proc option*(name1: string, name2 = "", help = "", default = none[string](), env
   ## Set ``env`` to an environment variable name to use as the default value
   ##
   ## Set ``choices`` to restrict the possible choices.
-  ##
+  ## 
+  ## Set ``completionGenerator``, with string at index given by shell kind. 
+  ## The string is executable in the target shell and will return a list of 
+  ## completions for the option. It is not necessary to provide for every shell
+  ## kind, however completion generator output will only be available where a
+  ## generator string is provided.
+  ## 
   ## Set ``required = true`` if this is a required option. Yes, calling
   ## it a "required option" is a paradox :)
   ##
@@ -226,6 +241,31 @@ proc option*(name1: string, name2 = "", help = "", default = none[string](), env
     assert p.parse(@["-a", "5"]).apple == "5"
     assert p.parse(@[]).apple_opt.isNone
     assert p.parse(@["--apple", "6"]).apple_opt.get() == "6"
+  runnableExamples:
+    var p = newParser:
+      option(
+        "-f", "--file",
+        default=some("default.txt"), help="Output file",
+        completionsGenerator=[
+          ShellCompletionKind.Bash: "compgen -f",
+          ShellCompletionKind.Zsh: "compadd -- *(.)",
+          ShellCompletionKind.Fish: "__fish_complete_path"
+        ]
+      )
+      option(
+        "-p", "--pid",
+        env="MYAPP_PID", help="Process ID",
+        completionsGenerator=[
+          ShellCompletionKind.Bash: "compgen -A pid",
+          ShellCompletionKind.Zsh: "compadd -- ${(ps -Ao pid)}",
+          ShellCompletionKind.Fish: "__fish_complete_pids"
+        ]
+      )
+      
+    try:
+      discard p.parse(@["--kind", "meat"])
+    except UsageError as e:
+      assert e.msg.contains("invalid choice 'meat'")
 
   let names = longAndShortFlag(name1, name2)
   let varname = names.extractVarname
@@ -241,16 +281,26 @@ proc option*(name1: string, name2 = "", help = "", default = none[string](), env
     optDefault: default,
     optChoices: choices,
     optRequired: required,
+    optCompletionsGenerator: completionsGenerator
   )
 
-proc arg*(varname: string, default = none[string](), env = "", help = "", nargs = 1) {.compileTime.} =
+proc arg*(
+  varname: string,
+  default = none[string](),
+  env = "", help = "",
+  completionsGenerator = default(array[ShellCompletionKind, string]),
+  nargs = 1) {.compileTime.} =
   ## Add an argument to the argument parser.
   ##
   ## Set ``default`` to the default ``Option[string]`` value.  This is only
   ## allowed for ``nargs = 1``.
   ##
   ## Set ``env`` to an environment variable name to use as the default value. This is only allowed for ``nargs = 1``.
-  ##
+  ## 
+  ## Set ``completionsGenerator``, with string at index given by shell kind. 
+  ## The string is executable in the target shell and will return a list of 
+  ## completions for the option. 
+  ## 
   ## The value ``nargs`` has the following meanings:
   ##
   ## - ``nargs = 1`` : A single argument. The value type will be ``string``
@@ -275,6 +325,7 @@ proc arg*(varname: string, default = none[string](), env = "", help = "", nargs 
     nargs: nargs,
     env: env,
     argDefault: default,
+    argCompletionsGenerator: completionsGenerator
   )
 
 proc help*(helptext: string) {.compileTime.} =
@@ -299,6 +350,18 @@ proc nohelpflag*() {.compileTime.} =
       nohelpflag()
 
   builderStack[^1].components.del(0)
+
+proc noCompletionsFlag*() {.compileTime.} =
+  ## Disable the automatic ``--completions`` flag, usable top level commands only
+  runnableExamples:
+    var p = newParser:
+      noCompletionsFlag()
+  let inSubcommand =  builderStack.len > 1
+  doUsageAssert not inSubcommand, "noCompletionsFlag() can only be used at the top-level parser"
+  for ix in 0 ..< builderStack[^1].components.len:
+    let comp = builderStack[^1].components[ix]
+    if comp.varname ==  "argparse_completion_definitions":
+      builderStack[^1].components.delete(ix) # del() will not preserve order
 
 template run*(body: untyped): untyped =
   ## Add a run block to this command
