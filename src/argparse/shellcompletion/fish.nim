@@ -9,7 +9,7 @@ template addFlag(short:string,long:string,require:bool=true):untyped =
   if require and short=="" and long=="":
     raise ValueError.newException("At least one of short or long flag must be provided for flag completion")
   if short != "": result &= "-s " & short[1..^1] & " "
-  if long != "": result &= "-l " & long[1..^1] & " "
+  if long != "": result &= "-l " & long[2..^1] & " "
     
 template addHelp():untyped =
   if help != "": result &= "-d '$#' " % [help.replace("'", "\\'")]
@@ -59,8 +59,8 @@ proc getFishShellCompletion(
 
 proc getFishShellCompletion(
   component: Component,
-  untraversedSubcommands: openArray[string] = [], # block these completions
-  subcommandPath: openArray[string] = [], # for subcommands, the path to this command
+  untraversedSubcommands: openArray[string] = @[], # block these completions
+  subcommandPath: openArray[string] = @[], # for subcommands, the path to this command
   noFiles=true, 
 ):string {.compiletime.} =
   ## Adds arguments
@@ -116,7 +116,6 @@ proc getFishShellCompletionsTemplate*(
       allSubcommandsPre
     
   let untraversedSubcommands = (allSubcommands.get() - subcommandPath.toHashSet).toSeq
-  echo b.components
   # argument completions
   for c in b.components:
     if c.kind != ArgArgument:

@@ -11,7 +11,8 @@ import sets
 
 import ./macrohelp
 import ./filler
-import ./types
+import ./types; export types
+import ./util
 import ./shellcompletion/shellcompletion
 
 type
@@ -43,7 +44,7 @@ var builderStack* {.compileTime.} = newSeq[Builder]()
 proc toVarname*(x: string): string =
   ## Convert x to something suitable as a Nim identifier
   ## Replaces - with _ for instance
-  x.replace("-", "_").strip(chars={'_'})
+  x.replace("-", "_").strip(chars = {'_'})
 
 #--------------------------------------------------------------
 # ParseState
@@ -53,9 +54,9 @@ proc `$`*(state: ref ParseState): string {.inline.} = $(state[])
 
 proc advance(state: ref ParseState, amount: int, skip = false) =
   ## Advance the parse by `amount` tokens
-  ## 
+  ##
   ## If `skip` is given, add the passed-over tokens to `extra`
-  for i in 0..<amount:
+  for i in 0 ..< amount:
     if state.cursor >= state.tokens.len:
       continue
     if skip:
@@ -70,7 +71,8 @@ proc advance(state: ref ParseState, amount: int, skip = false) =
   else:
     let token = state.tokens[state.cursor]
     state.token = some(token)
-    if token.startsWith("-") and '=' in token: # key, value extract for "key value" and "--key=value"
+    if token.startsWith("-") and '=' in token:
+      # key, value extract for "key value" and "--key=value"
       let parts = token.split("=", 1)
       state.key = some(parts[0])
       state.value = some(parts[1])
@@ -112,22 +114,22 @@ proc safeIdentStr(x: string): string =
   for c in x:
     case c
     of '_':
-      if result.len >= 1 and result[result.len-1] != '_':
+      if result.len >= 1 and result[result.len - 1] != '_':
         result.add c
-    of 'A'..'Z', 'a'..'z', '\x80'..'\xff':
+    of 'A' .. 'Z', 'a' .. 'z', '\x80' .. '\xff':
       result.add c
-    of '0'..'9':
+    of '0' .. '9':
       if result.len >= 1:
         result.add c
     else:
       discard
   result.strip(chars = {'_'})
 
-proc popleft*[T](s: var seq[T]):T =
+proc popleft*[T](s: var seq[T]): T =
   ## Pop from the front of a seq
   result = s[0]
   when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
-    s.delete(0..0)
+    s.delete(0 .. 0)
   else:
     s.delete(0, 0)
 
@@ -136,7 +138,7 @@ proc popright*[T](s: var seq[T], n = 0): T =
   let idx = s.len - n - 1
   result = s[idx]
   when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
-    s.delete(idx..idx)
+    s.delete(idx .. idx)
   else:
     s.delete(idx, idx)
 
@@ -146,23 +148,18 @@ proc popright*[T](s: var seq[T], n = 0): T =
 
 proc identDef(varname: NimNode, vartype: NimNode): NimNode =
   ## Return a property definition for an object.
-  ## 
+  ##
   ## type
   ##   Foo = object
   ##     varname*: vartype <-- this is the AST being returned
   return nnkIdentDefs.newTree(
-    nnkPostfix.newTree(
-      ident("*"),
-      varname,
-    ),
-    vartype,
-    newEmptyNode()
+    nnkPostfix.newTree(ident("*"), varname), vartype, newEmptyNode()
   )
 
 proc propDefinitions(c: Component): seq[NimNode] =
   ## Return the type of this component as will be put in the
   ## parser return type object definition
-  ## 
+  ##
   ## type
   ##   Foo = object
   ##     name*: string <-- this is the AST being returned
@@ -180,10 +177,7 @@ proc propDefinitions(c: Component): seq[NimNode] =
       result.add identDef(varname, ident("string"))
       result.add identDef(
         ident(safeIdentStr(c.varname & "_opt")),
-        nnkBracketExpr.newTree(
-          ident("Option"),
-          ident("string")
-        )
+        nnkBracketExpr.newTree(ident("Option"), ident("string")),
       )
   of ArgArgument:
     if c.nargs != 1:
@@ -194,45 +188,46 @@ proc propDefinitions(c: Component): seq[NimNode] =
 #--------------------------------------------------------------
 # Builder
 #--------------------------------------------------------------
-
 proc newBuilder*(name = ""): Builder =
   new(result)
   result.name = name
-  result.symbol = genSym(nskLet, if name == "": "Argparse" else: name.safeIdentStr).toStrLit.strVal
+  result.symbol =
+    genSym(nskLet, if name == "": "Argparse" else: name.safeIdentStr).toStrLit.strVal
   result.children = newSeq[Builder]()
   result.runProcBodies = newSeq[NimNode]()
+  result.components = newSeq[Component]()
   result.components.add Component(
     kind: ArgFlag,
-    help: "Help",
     varname: "argparse_help",
-    shortCircuit: true,
+    help: "Help",
     flagShort: "-h",
     flagLong: "--help",
+    flagMultiple: false,
+    shortCircuit: true,
   )
-  
+
   let isTopLevel = builderStack.len == 0
   # Option for completion generation
-  if isTopLevel: result.components.add Component(
-    varname: COMPLETION_OPT_VARNAME,
-    help: "Print shell completion definitions for shell if given, else $SHELL",
-    kind: ArgOption,
-    env: "SHELL",
-    optLong: "--completionDefinitions",
-    optChoices: COMPLETION_SHELLS,
-    optRequired: false
-  )
-    
-proc `$`*(b: Builder): string = $(b[])
+  if isTopLevel:
+    result.components.add Component(
+      varname: COMPLETION_OPT_VARNAME,
+      #help: "Print shell completion definitions for shell if given, else $SHELL",
+      kind: ArgOption,
+      env: "SHELL",
+      optLong: "--completionDefinitions",
+      optChoices: COMPLETION_SHELLS,
+      optRequired: false,
+      optDefault: none(string),
+      optCompletionsGenerator: default(array[ShellCompletionKind, string]),
+    )
+
+proc `$`*(b: Builder): string =
+  $(b[])
 
 proc optsIdent(b: Builder): NimNode =
   ## Name of the option type for this Builder
   # let name = if b.name == "": "Argparse" else: b.name
   ident("Opts" & b.symbol)
-
-proc parserIdent(b: Builder): NimNode =
-  ## Name of the parser type for this Builder
-  # let name = if b.name == "": "Argparse" else: b.name
-  ident("Parser" & b.symbol)
 
 proc optsTypeDef*(b: Builder): NimNode =
   ## Generate the type definition for the return value of parsing:
@@ -245,23 +240,15 @@ proc optsTypeDef*(b: Builder): NimNode =
     properties.add(component.propDefinitions())
   if b.parent.isSome:
     properties.add nnkIdentDefs.newTree(
-      nnkPostfix.newTree(
-        ident("*"),
-        ident("parentOpts")
-      ),
-      nnkRefTy.newTree(
-        b.parent.get().optsIdent,
-      ),
-      newEmptyNode()
+      nnkPostfix.newTree(ident("*"), ident("parentOpts")),
+      nnkRefTy.newTree(b.parent.get().optsIdent),
+      newEmptyNode(),
     )
-  
+
   if b.children.len > 0:
     # .argparse_command
     properties.add nnkIdentDefs.newTree(
-      nnkPostfix.newTree(
-        ident("*"),
-        ident("argparse_command"),
-      ),
+      nnkPostfix.newTree(ident("*"), ident("argparse_command")),
       ident("string"),
       newEmptyNode(),
     )
@@ -271,60 +258,50 @@ proc optsTypeDef*(b: Builder): NimNode =
     let childOptsIdent = child.optsIdent()
     properties.add nnkIdentDefs.newTree(
       nnkPostfix.newTree(
-        ident("*"),
-        ident("argparse_" & child.name.toVarname() & "_opts")
+        ident("*"), ident("argparse_" & child.name.toVarname() & "_opts")
       ),
-      nnkBracketExpr.newTree(
-        ident("Option"),
-        nnkRefTy.newTree(childOptsIdent)
-      ),
-      newEmptyNode()
+      nnkBracketExpr.newTree(ident("Option"), nnkRefTy.newTree(childOptsIdent)),
+      newEmptyNode(),
     )
 
   # type MyOpts = object
   result = nnkTypeDef.newTree(
     b.optsIdent(),
     newEmptyNode(),
-    nnkObjectTy.newTree(
-      newEmptyNode(),
-      newEmptyNode(),
-      properties,
-    )
+    nnkObjectTy.newTree(newEmptyNode(), newEmptyNode(), properties),
   )
 
 proc parserTypeDef*(b: Builder): NimNode =
   ## Generate the type definition for the Parser object:
-  ## 
+  ##
   ## type
   ##   MyParser = object
   result = nnkTypeDef.newTree(
     b.parserIdent(),
     newEmptyNode(),
-    nnkObjectTy.newTree(
-      newEmptyNode(),
-      newEmptyNode(),
-      newEmptyNode(),
-    )
+    nnkObjectTy.newTree(newEmptyNode(), newEmptyNode(), newEmptyNode()),
   )
 
-proc raiseShortCircuit*(flagname: string, help: string, handler:proc) {.inline.} =
+proc raiseShortCircuit*(flagname: string, help: string) {.inline.} =
   var e: ref ShortCircuit
   new(e)
   e.flag = flagname
   e.msg = "ShortCircuit on " & flagname
   e.help = help
-  e.handler = handler
   raise e
+
+proc deriveShellFromEnvVar*(envVar: string): string =
+  envVar.split("/")[^1]
 
 proc parseProcDef*(b: Builder): NimNode =
   ## Generate the parse proc for this Builder
-  ## 
+  ##
   ## proc parse(p: MyParser, args: seq[string]): MyOpts =
   result = newStmtList()
-  
+
   let parserIdent = b.parserIdent()
   let optsIdent = b.optsIdent()
-  
+
   # flag/opt/arg handlers
   var flagCase = newCaseStatement(parseExpr("token"))
   var optCase = newCaseStatement(parseExpr("key"))
@@ -336,21 +313,14 @@ proc parseProcDef*(b: Builder): NimNode =
     of ArgFlag:
       var matches: seq[string]
       if component.flagShort != "":
-        matches.add(component.flagShort)  # of "-h":
+        matches.add(component.flagShort) # of "-h":
       if component.flagLong != "":
-        matches.add(component.flagLong)   # of "--help":
+        matches.add(component.flagLong) # of "--help":
       var body = newStmtList()
       if component.shortCircuit:
-        let varname = newStrLitNode(component.varname)
+        let varnameNode = newStrLitNode(component.varname)
         body.add quote do:
-          raiseShortCircuit(
-            `varname`,
-            parser.help,
-            proc(): void =
-              output.write(parser.help())
-              if quitOnHelp:
-                quit(1)
-          )
+          raiseShortCircuit(`varnameNode`, parser.help)
       else:
         if component.flagMultiple:
           let varname = ident(component.varname)
@@ -375,10 +345,7 @@ proc parseProcDef*(b: Builder): NimNode =
         let envValExpr = block:
           # intercept SHELL env var and derive canonical shell name
           if component.varname == COMPLETION_OPT_VARNAME:
-            newCall(
-              bindSym"deriveShellFromEnvVar",
-              newCall("getEnv", env, dft)
-            )
+            newCall(ident"deriveShellFromEnvVar", newCall("getEnv", env, dft))
           else:
             newCall("getEnv", env, dft)
         setDefaults.add quote do:
@@ -395,22 +362,24 @@ proc parseProcDef*(b: Builder): NimNode =
       var matches: seq[string]
       var optCombo: string
       if component.optShort != "":
-        matches.add(component.optShort)   # of "-h"
+        matches.add(component.optShort) # of "-h"
         optCombo.add component.optShort
       if component.optLong != "":
-        matches.add(component.optLong)    # of "--help"
+        matches.add(component.optLong) # of "--help"
         if optCombo != "":
           optCombo.add ","
         optCombo.add(component.optLong)
       let optComboNode = newStrLitNode(optCombo)
-      
-      # Additional hard code behaviours for options, that short circuit.
+
+      # Additional hard code behaviours for options,
       let hotwire: NimNode = block:
         if component.varname == COMPLETION_OPT_VARNAME:
-          b.raiseShortCircuitForCompletionDefinitions()
+          let varnameNode = newStrLitNode(component.varname)
+          quote:
+            raiseShortCircuit(`varnameNode`, "Printing completion definitions")
         else:
           parseExpr("discard \"no hotwire\"")
-  
+
       # Make sure it has a value
       let valueGuard = quote do:
         if state.value.isNone:
@@ -422,14 +391,20 @@ proc parseProcDef*(b: Builder): NimNode =
         let choices = component.optChoices
         choiceGuard = quote do:
           if state.value.get() notin `choices`:
-            raise UsageError.newException("Invalid value for " & `optComboNode` & ": " & state.value.get() & " (valid choices: " & $`choices` & ")")
-      
+            raise UsageError.newException(
+              "Invalid value for " & `optComboNode` & ": " & state.value.get() &
+                " (valid choices: " & $`choices` & ")"
+            )
+
       # Make sure required options have been provided
       if component.optRequired:
         let envStr = newStrLitNode(component.env)
         requiredOptionGuard.add quote do:
-          if `optComboNode` notin switches_seen and (`envStr` == "" or getEnv(`envStr`) == ""):
-            raise UsageError.newException("Option " & `optComboNode` & " is required and was not provided")
+          if `optComboNode` notin switches_seen and
+              (`envStr` == "" or getEnv(`envStr`) == ""):
+            raise UsageError.newException(
+              "Option " & `optComboNode` & " is required and was not provided"
+            )
 
       # Make sure it hasn't been provided twice
       var duplicateGuard: NimNode
@@ -445,21 +420,18 @@ proc parseProcDef*(b: Builder): NimNode =
         # -o single
         duplicateGuard = quote do:
           if `optComboNode` in switches_seen:
-            raise UsageError.newException("Option " & `optComboNode` & " supplied multiple times")
+            raise UsageError.newException(
+              "Option " & `optComboNode` & " supplied multiple times"
+            )
           switches_seen.add(`optComboNode`)
         body = quote do:
           opts.`varname` = state.value.get()
           opts.`varname_opt` = some(opts.`varname`)
           state.consume(ArgOption)
+          `hotwire` # internal shortcircuit for options
           continue
       if not body.isNil:
-        optCase.add(matches, newStmtList(
-          valueGuard,
-          choiceGuard,
-          duplicateGuard,
-          body, # set
-          hotwire, # shortcircuit for special variables, once they are set
-        ))
+        optCase.add(matches, newStmtList(valueGuard, choiceGuard, duplicateGuard, body))
     of ArgArgument:
       # Process positional arguments
       if component.nargs == -1:
@@ -470,31 +442,37 @@ proc parseProcDef*(b: Builder): NimNode =
           filler.optional(component.varname)
           let envStr = newStrLitNode(component.env)
           let dftStr = newStrLitNode(component.argDefault.get(""))
-          setDefaults.add replaceNodes(quote do:
-            opts.`varname` = getEnv(`envStr`, `dftStr`)
+          setDefaults.add replaceNodes(
+            quote do:
+              opts.`varname` = getEnv(`envStr`, `dftStr`)
           )
         elif component.argDefault.isSome:
           filler.optional(component.varname)
           let dftStr = newStrLitNode(component.argDefault.get())
-          setDefaults.add replaceNodes(quote do:
-            opts.`varname` = `dftStr`
+          setDefaults.add replaceNodes(
+            quote do:
+              opts.`varname` = `dftStr`
           )
         else:
           filler.required(component.varname, 1)
       elif component.nargs > 1:
         filler.required(component.varname, component.nargs)
-  
+
   # args proc
   let minArgs = newIntLitNode(filler.minArgs)
   var argcase = newCaseStatement(parseExpr("state.extra.len"))
   if filler.minArgs > 0:
-    for nargs in 0..<filler.minArgs:
+    for nargs in 0 ..< filler.minArgs:
       let missing = newStrLitNode(filler.missing(nargs).join(", "))
-      argcase.add(nargs, replaceNodes(quote do:
-        raise UsageError.newException("Missing argument(s): " & `missing`)
-      ))
+      argcase.add(
+        nargs,
+        replaceNodes(
+          quote do:
+            raise UsageError.newException("Missing argument(s): " & `missing`)
+        ),
+      )
   let upperBreakpoint = filler.upperBreakpoint
-  for nargs in filler.minArgs..upperBreakpoint:
+  for nargs in filler.minArgs .. upperBreakpoint:
     let channels = filler.channels(nargs)
     var s = newStmtList()
     for ch in filler.channels(nargs):
@@ -502,14 +480,16 @@ proc parseProcDef*(b: Builder): NimNode =
       case ch.kind
       of Wildcard:
         let argsAfterWildcard = newIntLitNode(filler.numArgsAfterWildcard)
-        s.add replaceNodes(quote do:
-          for i in 0..<(state.extra.len - `argsAfterWildcard`):
-            opts.`varname`.add state.extra.popleft()
+        s.add replaceNodes(
+          quote do:
+            for i in 0 ..< (state.extra.len - `argsAfterWildcard`):
+              opts.`varname`.add state.extra.popleft()
         )
       else:
-        for i in 0..<ch.idx.len:
-          s.add replaceNodes(quote do:
-            opts.`varname`.setOrAdd state.extra.popleft()
+        for i in 0 ..< ch.idx.len:
+          s.add replaceNodes(
+            quote do:
+              opts.`varname`.setOrAdd state.extra.popleft()
           )
     if nargs == upperBreakpoint:
       argcase.addElse(s)
@@ -520,39 +500,54 @@ proc parseProcDef*(b: Builder): NimNode =
   var commandCase = newCaseStatement(parseExpr("token"))
   for child in b.children:
     if filler.hasVariableArgs:
-      raise ValueError.newException("Mixing optional args with commands is not supported")
+      raise
+        ValueError.newException("Mixing optional args with commands is not supported")
     let childParserIdent = child.parserIdent()
     let childOptsIdent = child.optsIdent()
     let childNameStr = child.name.newStrLitNode()
     let subopts_prop_name = ident("argparse_" & child.name.toVarname & "_opts")
-    commandCase.add(child.name, replaceNodes(quote do:
-      ## Call the subcommand's parser
-      takeArgsFromExtra(opts, state)
-      argsTaken = true
-      opts.argparse_command = `childNameStr`
-      state.consume(ArgArgument)
-      var subparser = `childParserIdent`()
-      var subOpts: ref `childOptsIdent`
-      new(subOpts)
-      subOpts.parentOpts = opts
-      opts.`subopts_prop_name` = some(subOpts)
-      subparser.parse(subOpts, state, runblocks = runblocks, quitOnHelp = quitOnHelp, output = output)
-      continue
-    ))
-  
+    commandCase.add(
+      child.name,
+      replaceNodes(
+        quote do:
+          ## Call the subcommand's parser
+          takeArgsFromExtra(opts, state)
+          argsTaken = true
+          opts.argparse_command = `childNameStr`
+          state.consume(ArgArgument)
+          var subparser = `childParserIdent`()
+          var subOpts: ref `childOptsIdent`
+          new(subOpts)
+          subOpts.parentOpts = opts
+          opts.`subopts_prop_name` = some(subOpts)
+          subparser.parse(
+            subOpts,
+            state,
+            runblocks = runblocks,
+            quitOnHelp = quitOnHelp,
+            output = output,
+          )
+          continue
+      ),
+    )
+
   var addRunProcs = newStmtList() # to state
   var runProcs = newStmtList() # execute
   # Insert statements to print command completions and quit if arg given
   for p in b.runProcBodies:
-    addRunProcs.add(quote do:
-      state.runProcs.add(proc() =
-        `p`
-      ))
+    addRunProcs.add(
+      quote do:
+        state.runProcs.add(
+          proc() =
+            `p`
+        )
+    )
   if b.parent.isNone:
-    runProcs.add(quote do:
-      if runblocks:
-        for p in state.runProcs:
-          p()
+    runProcs.add(
+      quote do:
+        if runblocks:
+          for p in state.runProcs:
+            p()
     )
 
   proc mkCase(c: ref UnfinishedCase): NimNode =
@@ -567,13 +562,30 @@ proc parseProcDef*(b: Builder): NimNode =
   var argCase_node = mkCase(argCase)
   var commandCase_node = mkCase(commandCase)
 
-  var parseProc = quote do:
-    proc parse(parser: `parserIdent`, opts: ref `optsIdent`, state: ref ParseState, runblocks = false, quitOnHelp = true, output:Stream = ARGPARSE_STDOUT) {.used.} =
+  # Completions are always on the top-level parser
+  let isRootBuilder = b.parent.isNone
+  let doCompletionsShort =
+    if isRootBuilder:
+      b.getShortCircuitBehaviourImpl()
+    else:
+      newStmtList()
+  let completionOptVarname = newLit(COMPLETION_OPT_VARNAME)
+
+  var parseProc = quote:
+    proc parse(
+        parser: `parserIdent`,
+        opts: ref `optsIdent`,
+        state: ref ParseState,
+        runblocks = false,
+        quitOnHelp = true,
+        output: Stream = ARGPARSE_STDOUT,
+    ) {.used.} =
       try:
-        var switches_seen {.used.} : seq[string]
+        var switches_seen {.used.}: seq[string] = @[]
         proc takeArgsFromExtra(opts: ref `optsIdent`, state: ref ParseState) =
           `requiredOptionGuard`
           `argCase_node`
+
         # Set defaults
         `setDefaults`
         `addRunProcs`
@@ -599,78 +611,106 @@ proc parseProcDef*(b: Builder): NimNode =
           takeArgsFromExtra(opts, state)
         if state.extra.len > 0:
           # There are extra args.
-          raise UsageError.newException("Unknown argument(s): " & state.extra.join(", "))
+          raise
+            UsageError.newException("Unknown argument(s): " & state.extra.join(", "))
         `runProcs`
       except ShortCircuit as e:
-        if runblocks:
-          e.behaviour()
-        else:
+        if runblocks: # Run, hook in internal custom behaviour (help, completns)
+          if e.flag == "argparse_help":
+            output.write(parser.help())
+            if quitOnHelp:
+              quit(1)
+          elif e.flag == `completionOptVarname`:
+            `doCompletionsShort`
+            quit(1)
+          else:
+            raise e
+        else: # parse only
           raise e
 
   result.add(replaceNodes(parseProc))
 
   # Convenience parse/run procs
-  result.add replaceNodes(quote do:
-    proc parse(parser: `parserIdent`, args: seq[string], quitOnHelp = true): ref `optsIdent` {.used.} =
-      ## Parse arguments using the `parserIdent` parser
-      var state = newParseState(args)
-      var opts: ref `optsIdent`
-      new(opts)
-      parser.parse(opts, state, quitOnHelp = quitOnHelp)
-      result = opts
+  result.add replaceNodes(
+    quote do:
+      proc parse(
+          parser: `parserIdent`, args: seq[string], quitOnHelp = true
+      ): ref `optsIdent` {.used.} =
+        ## Parse arguments using the `parserIdent` parser
+        var state = newParseState(args)
+        var opts: ref `optsIdent`
+        new(opts)
+        parser.parse(opts, state, quitOnHelp = quitOnHelp)
+        result = opts
+
   )
   # proc parse() with no args
-  result.add replaceNodes(quote do:
-    proc parse(parser: `parserIdent`, quitOnHelp = true): ref `optsIdent` {.used.} =
-      ## Parse command line params
-      when declared(commandLineParams):
-        parser.parse(toSeq(commandLineParams()), quitOnHelp = quitOnHelp)
-      else:
-        var params: seq[string]
-        for i in 0..paramCount():
-          params.add(paramStr(i))
-        parser.parse(params, quitOnHelp = quitOnHelp)
+  result.add replaceNodes(
+    quote do:
+      proc parse(parser: `parserIdent`, quitOnHelp = true): ref `optsIdent` {.used.} =
+        ## Parse command line params
+        when declared(commandLineParams):
+          parser.parse(toSeq(commandLineParams()), quitOnHelp = quitOnHelp)
+        else:
+          var params: seq[string] = @[]
+          for i in 0 .. paramCount():
+            params.add(paramStr(i))
+          parser.parse(params, quitOnHelp = quitOnHelp)
+
   )
-  result.add replaceNodes(quote do:
-    proc run(parser: `parserIdent`, args: seq[string], quitOnHelp = true, output:Stream = ARGPARSE_STDOUT) {.used.} =
-      ## Run the matching run-blocks of the parser
-      var state = newParseState(args)
-      var opts: ref `optsIdent`
-      new(opts)
-      parser.parse(opts, state, runblocks = true, quitOnHelp = quitOnHelp, output = output)
+  result.add replaceNodes(
+    quote do:
+      proc run(
+          parser: `parserIdent`,
+          args: seq[string],
+          quitOnHelp = true,
+          output: Stream = ARGPARSE_STDOUT,
+      ) {.used.} =
+        ## Run the matching run-blocks of the parser
+        var state = newParseState(args)
+        var opts: ref `optsIdent`
+        new(opts)
+        parser.parse(
+          opts, state, runblocks = true, quitOnHelp = quitOnHelp, output = output
+        )
+
   )
   # proc run() with no args
-  result.add replaceNodes(quote do:
-    proc run(parser: `parserIdent`) {.used.} =
-      ## Run the matching run-blocks of the parser
-      when declared(commandLineParams):
-        parser.run(toSeq(commandLineParams()))
-      else:
-        var params: seq[string]
-        for i in 0..paramCount():
-          params.add(paramStr(i))
-        parser.run(params)
+  result.add replaceNodes(
+    quote do:
+      proc run(parser: `parserIdent`) {.used.} =
+        ## Run the matching run-blocks of the parser
+        when declared(commandLineParams):
+          parser.run(toSeq(commandLineParams()))
+        else:
+          var params: seq[string] = @[]
+          for i in 0 .. paramCount():
+            params.add(paramStr(i))
+          parser.run(params)
+
   )
 
   # Shorter named convenience procs
   if b.children.len > 0:
     # .argparse_command -> .command shortcut
-    result.add replaceNodes(quote do:
-      proc command(opts: ref `optsIdent`): string {.used, inline.} =
-        opts.argparse_command
+    result.add replaceNodes(
+      quote do:
+        proc command(opts: ref `optsIdent`): string {.used, inline.} =
+          opts.argparse_command
+
     )
 
   # .argparse_NAME_opts -> .NAME shortcut
   for child in b.children:
     let name = ident(child.name)
     let fulloptname = ident("argparse_" & child.name.toVarname & "_opts")
-    let retval = nnkBracketExpr.newTree(
-      ident("Option"),
-      nnkRefTy.newTree(child.optsIdent())
-    )
-    result.add replaceNodes(quote do:
-      proc `name`(opts: ref `optsIdent`): `retval` {.used, inline.} =
-        opts.`fulloptname`
+    let retval =
+      nnkBracketExpr.newTree(ident("Option"), nnkRefTy.newTree(child.optsIdent()))
+    result.add replaceNodes(
+      quote do:
+        proc `name`(opts: ref `optsIdent`): `retval` {.used, inline.} =
+          opts.`fulloptname`
+
     )
 
 proc setOrAdd*(x: var string, val: string) =
@@ -679,20 +719,6 @@ proc setOrAdd*(x: var string, val: string) =
 proc setOrAdd*(x: var seq[string], val: string) =
   x.add(val)
 
-proc getProgName(b:Builder): NimNode {.used.}=
-  ## Get the program name for help text and completions
-  ##
-  ## if `b.name` == "": getAppFilename().extractFilename() else: `b.name`
-  nnkIfExpr.newTree(
-    nnkElifExpr.newTree(
-      nnkInfix.newTree(newStrLitNode(b.name), newStrLitNode"==", newStrLitNode("")),
-      newCall("extractFilename", newCall("getAppFilename")),
-    ),
-    nnkElseExpr.newTree(
-      newStrLitNode(b.name)
-    )
-  )
-
 proc getHelpText*(b: Builder): string =
   ## Generate the static help text string
   if b.help != "":
@@ -700,12 +726,20 @@ proc getHelpText*(b: Builder): string =
     result.add("\L\L")
 
   # usage
-  var usage_parts:seq[string]
+  var usage_parts: seq[string]
 
-  proc firstline(s:string):string =
+  proc firstline(s: string): string =
     s.split("\L")[0]
 
-  proc formatOption(flags:string, helptext:string, defaultval = none[string](), envvar:string = "", choices:seq[string] = @[], opt_width = 26, max_width = 100):string =
+  proc formatOption(
+      flags: string,
+      helptext: string,
+      defaultval = none[string](),
+      envvar: string = "",
+      choices: seq[string] = @[],
+      opt_width = 26,
+      max_width = 100,
+  ): string =
     result.add("  " & flags)
     var helptext = helptext
     if choices.len > 0:
@@ -719,7 +753,7 @@ proc getHelpText*(b: Builder): string =
       if flags.len > opt_width:
         result.add("\L")
         result.add("  ")
-        result.add(" ".repeat(opt_width+1))
+        result.add(" ".repeat(opt_width + 1))
         result.add(helptext)
       else:
         result.add(" ".repeat(opt_width - flags.len))
@@ -734,25 +768,33 @@ proc getHelpText*(b: Builder): string =
     case comp.kind
     of ArgFlag:
       if not comp.hidden:
-          var flag_parts: seq[string]
-          if comp.flagShort != "":
-            flag_parts.add(comp.flagShort)
-          if comp.flagLong != "":
-            flag_parts.add(comp.flagLong)
-          opts.add(formatOption(flag_parts.join(", "), comp.help))
-          opts.add("\L")
+        var flag_parts: seq[string]
+        if comp.flagShort != "":
+          flag_parts.add(comp.flagShort)
+        if comp.flagLong != "":
+          flag_parts.add(comp.flagLong)
+        opts.add(formatOption(flag_parts.join(", "), comp.help))
+        opts.add("\L")
     of ArgOption:
       if not comp.hidden:
-          var flag_parts: seq[string]
-          if comp.optShort != "":
-            flag_parts.add(comp.optShort)
-          if comp.optLong != "":
-            flag_parts.add(comp.optLong)
-          var flags = flag_parts.join(", ") & "=" & comp.varname.toUpper()
-          opts.add(formatOption(flags, comp.help, defaultval = comp.optDefault, envvar = comp.env, choices = comp.optChoices))
-          opts.add("\L")
+        var flag_parts: seq[string]
+        if comp.optShort != "":
+          flag_parts.add(comp.optShort)
+        if comp.optLong != "":
+          flag_parts.add(comp.optLong)
+        var flags = flag_parts.join(", ") & "=" & comp.varname.toUpper()
+        opts.add(
+          formatOption(
+            flags,
+            comp.help,
+            defaultval = comp.optDefault,
+            envvar = comp.env,
+            choices = comp.optChoices,
+          )
+        )
+        opts.add("\L")
     of ArgArgument:
-      var leftside:string
+      var leftside: string
       if comp.nargs == 1:
         leftside = comp.varname
         if comp.argDefault.isSome:
@@ -762,10 +804,18 @@ proc getHelpText*(b: Builder): string =
       else:
         leftside = (&"{comp.varname} ").repeat(comp.nargs)
       usage_parts.add(leftside)
-      args.add(formatOption(leftside, comp.help, defaultval = comp.argDefault, envvar = comp.env, opt_width=16))
+      args.add(
+        formatOption(
+          leftside,
+          comp.help,
+          defaultval = comp.argDefault,
+          envvar = comp.env,
+          opt_width = 16,
+        )
+      )
       args.add("\L")
-  
-  var commands = newOrderedTable[string,string](2)
+
+  var commands = newOrderedTable[string, string](2)
 
   if b.children.len > 0:
     usage_parts.add("COMMAND")
@@ -775,7 +825,9 @@ proc getHelpText*(b: Builder): string =
       if not commands.hasKey(group):
         commands[group] = ""
       let indent = if group == "": "" else: "  "
-      commands[group].add(indent & formatOption(leftside, subbuilder.help.firstline, opt_width=16))
+      commands[group].add(
+        indent & formatOption(leftside, subbuilder.help.firstline, opt_width = 16)
+      )
       commands[group].add("\L")
 
   if usage_parts.len > 0 or opts != "":
@@ -816,18 +868,16 @@ proc helpProcDef*(b: Builder): NimNode =
   let helptext = b.getHelpText()
   let parserIdent = b.parserIdent()
   result = newStmtList()
-  result.add replaceNodes(quote do:
-    proc help(parser: `parserIdent`): string {.used.} =
-      ## Get the help string for this parser
-      var prog = `b.getProgName()`
-      result.add `helptext`.replace("{prog}", prog)
+  var getProgNameAst: NimNode = b.getProgNameAst()
+  result.add replaceNodes(
+    quote do:
+      proc help(parser: `parserIdent`): string {.used.} =
+        ## Get the help string for this parser
+        result.add `helptext`.replace("{prog}", `getProgNameAst`)
+
   )
 
-type
-  GenResponse* = tuple
-    types: NimNode
-    procs: NimNode
-    instance: NimNode
+type GenResponse* = tuple[types: NimNode, procs: NimNode, instance: NimNode]
 
 proc addParser*(name: string, group: string, content: proc()): Builder =
   ## Add a parser (whether main parser or subcommand) and return the Builder
@@ -843,7 +893,7 @@ proc addParser*(name: string, group: string, content: proc()): Builder =
     # subcommand
     builderStack[^1].children.add(builder)
     builder.parent = some(builderStack[^1])
-  
+
   return builder
 
 proc add_runProc*(body: NimNode) {.compileTime.} =
@@ -863,10 +913,9 @@ proc allChildren*(builder: Builder): seq[Builder] =
 proc generateDefs*(builder: Builder): NimNode =
   ## Generate the AST definitions for the current builder
   result = newStmtList()
-  var constsSection = nnkConstSection.newTree()
   var typeSection = nnkTypeSection.newTree()
   var procsSection = newStmtList()
-  
+
   # children first to avoid forward declarations
   for child in builder.allChildren().reversed:
     typeSection.add child.optsTypeDef()
@@ -874,7 +923,6 @@ proc generateDefs*(builder: Builder): NimNode =
     procsSection.add child.helpProcDef()
     procsSection.add child.parseProcDef()
 
-  constsSection.add builder.shellCompletionsConstDef()
   #   MyOpts = object
   typeSection.add builder.optsTypeDef()
   #   MyParser = object
@@ -885,15 +933,15 @@ proc generateDefs*(builder: Builder): NimNode =
   # proc run(p: MyParser, ...)
   procsSection.add builder.helpProcDef()
   procsSection.add builder.parseProcDef()
-  
+
   # let parser = MyParser()
   # parser
   let parserIdent = builder.parserIdent()
-  let instantiationSection = quote do:
+  let instantiationSection = quote:
     var parser = `parserIdent`()
     parser
-  
+
   result.add(typeSection)
-  result.add(constsSection)
   result.add(procsSection)
   result.add(instantiationSection)
+  #echo result.repr

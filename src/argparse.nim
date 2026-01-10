@@ -92,9 +92,10 @@ runnableExamples:
   assert opts.leave.isNone
 
 import std/[macros,strutils,sequtils]
-import argparse/types
+import argparse/types; export types
 import argparse/backend; export backend
 import argparse/macrohelp; export macrohelp
+
 
 type FlagNames = tuple[long: string, short: string]
 proc longAndShortFlag(name1: string, name2: string): FlagNames =
@@ -102,7 +103,7 @@ proc longAndShortFlag(name1: string, name2: string): FlagNames =
   ## Both short, or long, is not allowed
   ## Short may be empty, long may be empty, but not both
   ## Flags matching "^--(-)+", "^--?$", are not allowed
-  var 
+  var
     n1,n2,longname,shortname: string
   n1=strip(name1)
   n2=strip(name2)
@@ -137,11 +138,12 @@ template newParser*(name: string, body: untyped): untyped =
       help("'{prog}' == 'my parser'")
       flag("-a")
     assert p.parse(@["-a"]).a == true
-
   macro domkParser() : untyped {.gensym.} =
     let builder = addParser(name, "", proc() = body)
     builder.generateDefs()
   domkParser()
+
+
 
 template newParser*(body: untyped): untyped =
   ## Create a new command-line parser named the same as the current executable.
@@ -153,7 +155,7 @@ template newParser*(body: untyped): untyped =
 
   macro domkParser(): untyped =
     let builder = addParser("", "", proc() = body)
-    builder.generateDefs()
+    builder.generateDefs() # During execution of generated code
   domkParser()
 
 proc flag*(name1: string, name2 = "", multiple = false, help = "", hidden = false, shortcircuit = false) {.compileTime.} =
@@ -196,19 +198,14 @@ proc flag*(name1: string, name2 = "", multiple = false, help = "", hidden = fals
     hidden: hidden,
   )
 
-proc option*(name1: string, name2 = "", help = "", default = none[string](), env = "", multiple = false, choices: seq[string] = @[], required = false, hidden = false) {.compileTime.} =
-  ## Add an option to the argument parser.  The (--) long flag, and if not
-  ## present the (-) short flag will be used as the name on the parsed result.
-  ##
 proc option*(name1: string, name2 = "", help = "",
   default = none[string](), env = "", multiple = false,
   choices: seq[string] = @[],
   completionsGenerator= default(array[ShellCompletionKind,string]),
   required = false, hidden = false) {.compileTime.} =
-  ## Add an option to the argument parser.  The longest
-  ## named flag will be used as the name on the parsed
-  ## result.
-  ## 
+  ## Add an option to the argument parser.  The (--) long flag, and if not
+  ## present the (-) short flag will be used as the name on the parsed result.
+  ##
   ## Additionally, an ``Option[string]`` named ``FLAGNAME_opt``
   ## will be available on the parse result.
   ##
@@ -222,13 +219,13 @@ proc option*(name1: string, name2 = "", help = "",
   ## Set ``env`` to an environment variable name to use as the default value
   ##
   ## Set ``choices`` to restrict the possible choices.
-  ## 
-  ## Set ``completionGenerator``, with string at index given by shell kind. 
-  ## The string is executable in the target shell and will return a list of 
+  ##
+  ## Set ``completionGenerator``, with string at index given by shell kind.
+  ## The string is executable in the target shell and will return a list of
   ## completions for the option. It is not necessary to provide for every shell
   ## kind, however completion generator output will only be available where a
   ## generator string is provided.
-  ## 
+  ##
   ## Set ``required = true`` if this is a required option. Yes, calling
   ## it a "required option" is a paradox :)
   ##
@@ -261,7 +258,7 @@ proc option*(name1: string, name2 = "", help = "",
           ShellCompletionKind.Fish: "__fish_complete_pids"
         ]
       )
-      
+
     try:
       discard p.parse(@["--kind", "meat"])
     except UsageError as e:
@@ -296,11 +293,11 @@ proc arg*(
   ## allowed for ``nargs = 1``.
   ##
   ## Set ``env`` to an environment variable name to use as the default value. This is only allowed for ``nargs = 1``.
-  ## 
-  ## Set ``completionsGenerator``, with string at index given by shell kind. 
-  ## The string is executable in the target shell and will return a list of 
-  ## completions for the option. 
-  ## 
+  ##
+  ## Set ``completionsGenerator``, with string at index given by shell kind.
+  ## The string is executable in the target shell and will return a list of
+  ## completions for the option.
+  ##
   ## The value ``nargs`` has the following meanings:
   ##
   ## - ``nargs = 1`` : A single argument. The value type will be ``string``

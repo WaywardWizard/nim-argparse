@@ -5,7 +5,6 @@ type
   ShortCircuit* = object of CatchableError
     flag*: string
     help*: string
-    handler*: proc()
     
   ShellCompletionKind* = enum
     sckFish = "fish"
