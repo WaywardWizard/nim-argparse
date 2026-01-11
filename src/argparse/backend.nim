@@ -1,37 +1,38 @@
-import algorithm; export algorithm
+import algorithm
+export algorithm
 import macros
-import options; export options
-import sequtils; export sequtils
-import streams; export streams
+import options
+export options
+import sequtils
+export sequtils
+import streams
+export streams
 import strformat
-import strutils; export strutils
+import strutils
+export strutils
 import tables
-import os; export os
+import os
+export os
 import sets
 
 import ./macrohelp
 import ./filler
-import ./types; export types
+import ./types
+export types
 import ./util
 import ./shellcompletion/shellcompletion
 
-type
-  ParseState* = object
-    tokens*: seq[string]
-    cursor*: int
-    extra*: seq[string]
-      ## tokens that weren't parsed
-    done*: bool
-    token*: Option[string]
-      ## The current unprocessed token
-    key*: Option[string]
-      ## The current key (possibly the head of a 'key=value' token)
-    value*: Option[string]
-      ## The current value (possibly the tail of a 'key=value' token)
-    valuePartOfToken*: bool
-      ## true if the value is part of the current token (e.g. 'key=value')
-    runProcs*: seq[proc()]
-      ## Procs to be run at the end of parsing
+type ParseState* = object
+  tokens*: seq[string]
+  cursor*: int
+  extra*: seq[string] ## tokens that weren't parsed
+  done*: bool
+  token*: Option[string] ## The current unprocessed token
+  key*: Option[string] ## The current key (possibly the head of a 'key=value' token)
+  value*: Option[string] ## The current value (possibly the tail of a 'key=value' token)
+  valuePartOfToken*: bool
+    ## true if the value is part of the current token (e.g. 'key=value')
+  runProcs*: seq[proc()] ## Procs to be run at the end of parsing
 
 template doUsageAssert*(condition: bool, msg: string): untyped =
   ## Raise a UsageError if condition is false
@@ -50,7 +51,8 @@ proc toVarname*(x: string): string =
 # ParseState
 #--------------------------------------------------------------
 
-proc `$`*(state: ref ParseState): string {.inline.} = $(state[])
+proc `$`*(state: ref ParseState): string {.inline.} =
+  $(state[])
 
 proc advance(state: ref ParseState, amount: int, skip = false) =
   ## Advance the parse by `amount` tokens
@@ -209,17 +211,8 @@ proc newBuilder*(name = ""): Builder =
   let isTopLevel = builderStack.len == 0
   # Option for completion generation
   if isTopLevel:
-    result.components.add Component(
-      varname: COMPLETION_OPT_VARNAME,
-      #help: "Print shell completion definitions for shell if given, else $SHELL",
-      kind: ArgOption,
-      env: "SHELL",
-      optLong: "--completionDefinitions",
-      optChoices: COMPLETION_SHELLS,
-      optRequired: false,
-      optDefault: none(string),
-      optCompletionsGenerator: default(array[ShellCompletionKind, string]),
-    )
+    result.components.add COMPLETION_OPT
+    result.components.add COMPLETION_FLAG
 
 proc `$`*(b: Builder): string =
   $(b[])
@@ -290,8 +283,6 @@ proc raiseShortCircuit*(flagname: string, help: string) {.inline.} =
   e.help = help
   raise e
 
-proc deriveShellFromEnvVar*(envVar: string): string =
-  envVar.split("/")[^1]
 
 proc parseProcDef*(b: Builder): NimNode =
   ## Generate the parse proc for this Builder
@@ -340,14 +331,10 @@ proc parseProcDef*(b: Builder): NimNode =
       let varname = ident(component.varname)
       let varname_opt = ident(component.varname & "_opt")
       if component.env != "":
+        # Set default from environment variable
         let dft = newStrLitNode(component.optDefault.get(""))
         let env = newStrLitNode(component.env)
-        let envValExpr = block:
-          # intercept SHELL env var and derive canonical shell name
-          if component.varname == COMPLETION_OPT_VARNAME:
-            newCall(ident"deriveShellFromEnvVar", newCall("getEnv", env, dft))
-          else:
-            newCall("getEnv", env, dft)
+        let envValExpr = newCall("getEnv", env, dft)
         setDefaults.add quote do:
           opts.`varname` = `envValExpr`
         if component.optDefault.isSome:
@@ -564,12 +551,16 @@ proc parseProcDef*(b: Builder): NimNode =
 
   # Completions are always on the top-level parser
   let isRootBuilder = b.parent.isNone
-  let doCompletionsShort =
-    if isRootBuilder:
+  let isCompletionsEnabled = b.components.anyIt(
+    it.varname in [COMPLETION_OPT_VARNAME,COMPLETION_FLAG_VARNAME])
+      
+  let doCompletionsShort = block:
+    if isCompletionsEnabled and isRootBuilder:
       b.getShortCircuitBehaviourImpl()
     else:
-      newStmtList()
+      newEmptyNode()
   let completionOptVarname = newLit(COMPLETION_OPT_VARNAME)
+  let completionFlagVarname = newLit(COMPLETION_FLAG_VARNAME)
 
   var parseProc = quote:
     proc parse(
@@ -616,22 +607,25 @@ proc parseProcDef*(b: Builder): NimNode =
         `runProcs`
       except ShortCircuit as e:
         if runblocks: # Run, hook in internal custom behaviour (help, completns)
-          if e.flag == "argparse_help":
-            output.write(parser.help())
-            if quitOnHelp:
-              quit(1)
-          elif e.flag == `completionOptVarname`:
-            `doCompletionsShort`
-            quit(1)
-          else:
-            raise e
+          block handler:
+            if e.flag == "argparse_help": # if
+              output.write(parser.help())
+              if quitOnHelp:
+                quit(1)
+              break handler
+            when `isRootBuilder` and `isCompletionsEnabled`:
+              if e.flag in [`completionOptVarname`, `completionFlagVarname`]:
+                `doCompletionsShort`
+                #quit(1)
+                break handler
+            raise e # else
         else: # parse only
           raise e
 
   result.add(replaceNodes(parseProc))
 
   # Convenience parse/run procs
-  result.add replaceNodes(
+  result.add(
     quote do:
       proc parse(
           parser: `parserIdent`, args: seq[string], quitOnHelp = true

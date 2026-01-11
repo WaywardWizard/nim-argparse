@@ -34,11 +34,11 @@
 ## of the given subcommand.
 ##
 runnableExamples:
-  var res:string
+  var res: string
   var p = newParser:
     help("A demonstration of this library in a program named {prog}")
     flag("-n", "--dryrun")
-    option("--name", default=some("bob"), help = "Name to use")
+    option("--name", default = some("bob"), help = "Name to use")
     command("ls"):
       run:
         res = "did ls " & opts.parentOpts.name
@@ -61,7 +61,12 @@ runnableExamples:
   var p = newParser:
     help("A description of this program, named {prog}")
     flag("-n", "--dryrun")
-    option("-o", "--output", help="Write output to this file", default=some("somewhere.txt"))
+    option(
+      "-o",
+      "--output",
+      help = "Write output to this file",
+      default = some("somewhere.txt"),
+    )
     option("-k", "--kind", choices = @["fruit", "vegetable"])
     arg("input")
 
@@ -91,39 +96,46 @@ runnableExamples:
   assert opts.go.get.a == true
   assert opts.leave.isNone
 
-import std/[macros,strutils,sequtils]
-import argparse/types; export types
-import argparse/backend; export backend
-import argparse/macrohelp; export macrohelp
-
-
+import std/[macros, strutils, sequtils]
+# import export as macros bind in the callers context
+import argparse/types
+export types
+import argparse/backend
+export backend
+import argparse/macrohelp
+export macrohelp
+import argparse/shellcompletion/shellcompletion 
+export deriveShellFromEnvVar, COMPLETION_OPT_VARNAME
 type FlagNames = tuple[long: string, short: string]
 proc longAndShortFlag(name1: string, name2: string): FlagNames =
   ## Extract --long and -short flag names from the two provided names
   ## Both short, or long, is not allowed
   ## Short may be empty, long may be empty, but not both
   ## Flags matching "^--(-)+", "^--?$", are not allowed
-  var
-    n1,n2,longname,shortname: string
-  n1=strip(name1)
-  n2=strip(name2)
-  doUsageAssert( n1&n2 != "", "At least one flag must be provided")
-  for n in [n1,n2]:
-    if n=="": continue
+  var n1, n2, longname, shortname: string
+  n1 = strip(name1)
+  n2 = strip(name2)
+  doUsageAssert(n1 & n2 != "", "At least one flag must be provided")
+  for n in [n1, n2]:
+    if n == "":
+      continue
     doUsageAssert(n.startsWith("-"), "Flag not valid, must start with -")
     if n.startsWith("--"):
-      doUsageAssert(n.len>2, "Long flag missing name: '%s'" % n)
+      doUsageAssert(n.len > 2, "Long flag missing name: '%s'" % n)
       doUsageAssert(n[2] != '-', "Long flag has excess dashes: '%s'" % n)
-      doUsageAssert(longname=="",
-        "Multiple long flags provided: '%s' and '%s'" % [longname, n])
-      longname=n
+      doUsageAssert(
+        longname == "", "Multiple long flags provided: '%s' and '%s'" % [longname, n]
+      )
+      longname = n
     else:
-      doUsageAssert(n.len>1, "Short flag missing name: '%s'" % n)
-      doUsageAssert(shortname=="",
-        "Multiple short flags provided: '%s' and '%s'" % [shortname, n])
-      shortname=n
+      doUsageAssert(n.len > 1, "Short flag missing name: '%s'" % n)
+      doUsageAssert(
+        shortname == "", "Multiple short flags provided: '%s' and '%s'" % [shortname, n]
+      )
+      shortname = n
   return (longname, shortname)
-proc extractVarname(f:FlagNames): string {.inline.} =
+
+proc extractVarname(f: FlagNames): string {.inline.} =
   ## Return long else short
   if f.long != "":
     return f.long.toVarname()
@@ -138,12 +150,16 @@ template newParser*(name: string, body: untyped): untyped =
       help("'{prog}' == 'my parser'")
       flag("-a")
     assert p.parse(@["-a"]).a == true
-  macro domkParser() : untyped {.gensym.} =
-    let builder = addParser(name, "", proc() = body)
+  macro domkParser(): untyped {.gensym.} =
+    let builder = addParser(
+      name,
+      "",
+      proc() =
+        body,
+    )
     builder.generateDefs()
+
   domkParser()
-
-
 
 template newParser*(body: untyped): untyped =
   ## Create a new command-line parser named the same as the current executable.
@@ -154,11 +170,24 @@ template newParser*(body: untyped): untyped =
     assert p.parse(@["-a"]).a == true
 
   macro domkParser(): untyped =
-    let builder = addParser("", "", proc() = body)
+    let builder = addParser(
+      "",
+      "",
+      proc() =
+        body,
+    )
     builder.generateDefs() # During execution of generated code
+
   domkParser()
 
-proc flag*(name1: string, name2 = "", multiple = false, help = "", hidden = false, shortcircuit = false) {.compileTime.} =
+proc flag*(
+    name1: string,
+    name2 = "",
+    multiple = false,
+    help = "",
+    hidden = false,
+    shortcircuit = false,
+) {.compileTime.} =
   ## Add a boolean flag to the argument parser.  The boolean
   ## will be available on the parsed options object as the
   ## longest named flag.
@@ -176,9 +205,9 @@ proc flag*(name1: string, name2 = "", multiple = false, help = "", hidden = fals
   ## ``help`` is additional help text for this flag.
   runnableExamples:
     var p = newParser("Some Thing"):
-      flag("--show-name", help="Show the name")
-      flag("-a", help="Some flag named a")
-      flag("-n", "--dryrun", help="Don't actually run")
+      flag("--show-name", help = "Show the name")
+      flag("-a", help = "Some flag named a")
+      flag("-n", "--dryrun", help = "Don't actually run")
 
     let opts = p.parse(@["--show-name", "-n"])
     assert opts.show_name == true
@@ -198,11 +227,18 @@ proc flag*(name1: string, name2 = "", multiple = false, help = "", hidden = fals
     hidden: hidden,
   )
 
-proc option*(name1: string, name2 = "", help = "",
-  default = none[string](), env = "", multiple = false,
-  choices: seq[string] = @[],
-  completionsGenerator= default(array[ShellCompletionKind,string]),
-  required = false, hidden = false) {.compileTime.} =
+proc option*(
+    name1: string,
+    name2 = "",
+    help = "",
+    default = none[string](),
+    env = "",
+    multiple = false,
+    choices: seq[string] = @[],
+    completionsGenerator = default(array[ShellCompletionKind, string]),
+    required = false,
+    hidden = false,
+) {.compileTime.} =
   ## Add an option to the argument parser.  The (--) long flag, and if not
   ## present the (-) short flag will be used as the name on the parsed result.
   ##
@@ -234,29 +270,33 @@ proc option*(name1: string, name2 = "", help = "",
   ## ``help`` is additional help text for this option.
   runnableExamples:
     var p = newParser:
-      option("-a", "--apple", help="Name of apple")
+      option("-a", "--apple", help = "Name of apple")
     assert p.parse(@["-a", "5"]).apple == "5"
     assert p.parse(@[]).apple_opt.isNone
     assert p.parse(@["--apple", "6"]).apple_opt.get() == "6"
   runnableExamples:
     var p = newParser:
       option(
-        "-f", "--file",
-        default=some("default.txt"), help="Output file",
-        completionsGenerator=[
+        "-f",
+        "--file",
+        default = some("default.txt"),
+        help = "Output file",
+        completionsGenerator = [
           ShellCompletionKind.Bash: "compgen -f",
           ShellCompletionKind.Zsh: "compadd -- *(.)",
-          ShellCompletionKind.Fish: "__fish_complete_path"
-        ]
+          ShellCompletionKind.Fish: "__fish_complete_path",
+        ],
       )
       option(
-        "-p", "--pid",
-        env="MYAPP_PID", help="Process ID",
-        completionsGenerator=[
+        "-p",
+        "--pid",
+        env = "MYAPP_PID",
+        help = "Process ID",
+        completionsGenerator = [
           ShellCompletionKind.Bash: "compgen -A pid",
           ShellCompletionKind.Zsh: "compadd -- ${(ps -Ao pid)}",
-          ShellCompletionKind.Fish: "__fish_complete_pids"
-        ]
+          ShellCompletionKind.Fish: "__fish_complete_pids",
+        ],
       )
 
     try:
@@ -278,15 +318,17 @@ proc option*(name1: string, name2 = "", help = "",
     optDefault: default,
     optChoices: choices,
     optRequired: required,
-    optCompletionsGenerator: completionsGenerator
+    optCompletionsGenerator: completionsGenerator,
   )
 
 proc arg*(
-  varname: string,
-  default = none[string](),
-  env = "", help = "",
-  completionsGenerator = default(array[ShellCompletionKind, string]),
-  nargs = 1) {.compileTime.} =
+    varname: string,
+    default = none[string](),
+    env = "",
+    help = "",
+    completionsGenerator = default(array[ShellCompletionKind, string]),
+    nargs = 1,
+) {.compileTime.} =
   ## Add an argument to the argument parser.
   ##
   ## Set ``default`` to the default ``Option[string]`` value.  This is only
@@ -322,7 +364,7 @@ proc arg*(
     nargs: nargs,
     env: env,
     argDefault: default,
-    argCompletionsGenerator: completionsGenerator
+    argCompletionsGenerator: completionsGenerator,
   )
 
 proc help*(helptext: string) {.compileTime.} =
@@ -348,18 +390,6 @@ proc nohelpflag*() {.compileTime.} =
 
   builderStack[^1].components.del(0)
 
-proc noCompletionsFlag*() {.compileTime.} =
-  ## Disable the automatic ``--completions`` flag, usable top level commands only
-  runnableExamples:
-    var p = newParser:
-      noCompletionsFlag()
-  let inSubcommand =  builderStack.len > 1
-  doUsageAssert not inSubcommand, "noCompletionsFlag() can only be used at the top-level parser"
-  for ix in 0 ..< builderStack[^1].components.len:
-    let comp = builderStack[^1].components[ix]
-    if comp.varname ==  "argparse_completion_definitions":
-      builderStack[^1].components.delete(ix) # del() will not preserve order
-
 template run*(body: untyped): untyped =
   ## Add a run block to this command
   runnableExamples:
@@ -376,11 +406,14 @@ template command*(name: string, group: string, content: untyped): untyped =
   ## ``group`` is a string used to group commands in help output
   runnableExamples:
     var p = newParser:
-      command("dostuff", "groupA"): discard
-      command("morestuff", "groupB"): discard
-      command("morelikethefirst", "groupA"): discard
+      command("dostuff", "groupA"):
+        discard
+      command("morestuff", "groupB"):
+        discard
+      command("morelikethefirst", "groupA"):
+        discard
     echo p.help
-  add_command(name, group) do ():
+  add_command(name, group) do():
     content
 
 template command*(name: string, content: untyped): untyped =
@@ -392,3 +425,40 @@ template command*(name: string, content: untyped): untyped =
           echo "Actually do stuff"
     p.run(@["dostuff"])
   command(name, "", content)
+  
+proc noCompletions*(disableFlag=true,disableOpt=true) {.compileTime.} =
+  ## Disable completions flags
+  runnableExamples:
+    var p = newParser:
+      noCompletions()
+  assert builderStack.len > 0
+  let inSubcommand = builderStack.len > 1
+  doUsageAssert not inSubcommand,
+    "noCompletionsFlag() can only be used at the top-level parser"
+  for ix in countdown(builderStack[^1].components.len - 1, 0):
+    let comp = builderStack[^1].components[ix]
+    # del() will not preserve order
+    if disableOpt:
+      if comp.varname == COMPLETION_OPT_VARNAME:
+        builderStack[^1].components.delete(ix) 
+    if disableFlag:
+      if comp.varname == COMPLETION_FLAG_VARNAME:
+        builderStack[^1].components.delete(ix) # del() will not preserve order
+        
+proc hideCompletions*(hideFlag=true,hideOpt=true) {.compileTime.} =
+  ## Hide completions flags from help
+  runnableExamples:
+    var p = newParser:
+      hideCompletions()
+  assert builderStack.len > 0
+  let inSubcommand = builderStack.len > 1
+  doUsageAssert not inSubcommand,
+    "hideCompletions() can only be used at the top-level parser"
+  for ix in countdown(0,builderStack[^1].components.len - 1):
+    case builderStack[^1].components[ix].varname
+    of COMPLETION_OPT_VARNAME:
+      if hideOpt: builderStack[^1].components[ix].hidden=true
+    of COMPLETION_FLAG_VARNAME:
+      if hideFlag: builderStack[^1].components[ix].hidden=true
+    else:
+      discard
