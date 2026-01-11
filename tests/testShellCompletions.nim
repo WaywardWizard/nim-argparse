@@ -124,6 +124,37 @@ suite "Environment":
     o.setPosition(0)
     check o.readall().split("\n").contains(COMPLETION_HEADER_FISH[0..^2])
     
+suite "Hide":
+  test "Hide completions from help":
+    var p = newParser("mycmd"):
+      flag("-a")
+      hideCompletions()
+    var o = newStringStream()
+    p.run(shlex"-h", quitOnHelp = false, output = o)
+    o.setPosition(0)
+    var mout = o.readAll()
+    check "--" & COMPLETION_LONG_FLAG notin mout
+    check COMPLETION_SHORT_HELP notin mout
+    
+suite "Completion generators":
+  test "Any directory in pwd":
+    const completionsGenerator: array[ShellCompletionKind,string] = [
+      sckFish: "__fish_complete_directories"
+    ]
+    const pidsGenerator: array[ShellCompletionKind,string] = [
+      sckFish: "ps -eo pid= | awk '{print $1}'"
+    ]
+    var p = newParser("mycmd"):
+      arg("dir", help="a directory", completionsGenerator=completionsGenerator)
+      option("--opt", help="an option", completionsGenerator=pidsGenerator)
+    var o = newStringStream()
+    p.run(shlex "--" & COMPLETION_LONG_FLAG & " fish", output = o)
+    o.setPosition(0)
+    var completions: string = o.readAll()
+    check completions.contains("__fish_complete_directories")
+    check completions.contains("ps -eo pid= | awk '{print $1}'")
+    
+    
 suite "Validity":
   for shell in COMPLETION_SHELLS:
     test &"{shell} shell":
@@ -140,5 +171,3 @@ suite "Validity":
         var completions: string = o.readAll()
         var outEx =  execCmdEx(&"{shell} -c \"source /dev/stdin\"", input=completions)
         check outEx.exitCode == 0
-        echo "FINISHED"
-        

@@ -122,12 +122,11 @@ proc getFishShellCompletionsTemplate*(
   let untraversedSubcommands = (allSubcommands.get() - subcommandPath.toHashSet).toSeq
   # argument completions
   for c in b.components:
-    if c.kind != ArgArgument:
-      result.add getFishShellCompletion(
-        component = c,
-        subcommandPath = subcommandPath,
-        untraversedSubcommands = untraversedSubcommands,
-      )   
+    result.add getFishShellCompletion(
+      component = c,
+      subcommandPath = subcommandPath,
+      untraversedSubcommands = untraversedSubcommands,
+    )   
   # subcommand completions
   for child in b.children:
     result.add getFishShellCompletion(

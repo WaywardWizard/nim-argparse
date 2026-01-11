@@ -454,7 +454,7 @@ proc hideCompletions*(hideFlag=true,hideOpt=true) {.compileTime.} =
   let inSubcommand = builderStack.len > 1
   doUsageAssert not inSubcommand,
     "hideCompletions() can only be used at the top-level parser"
-  for ix in countdown(0,builderStack[^1].components.len - 1):
+  for ix in countdown(builderStack[^1].components.len - 1,0):
     case builderStack[^1].components[ix].varname
     of COMPLETION_OPT_VARNAME:
       if hideOpt: builderStack[^1].components[ix].hidden=true
