@@ -97,14 +97,13 @@ runnableExamples:
   assert opts.leave.isNone
 
 import std/[macros, strutils, sequtils]
+import argparse/[types, backend, macrohelp]
+
 # import export as macros bind in the callers context
-import argparse/types
-export types
-import argparse/backend
-export backend
-import argparse/macrohelp
-export macrohelp
-import argparse/shellcompletion/shellcompletion 
+export types,backend,macrohelp
+
+import argparse/shellcompletion/[shellcompletion]
+
 export deriveShellFromEnvVar, COMPLETION_OPT_VARNAME
 type FlagNames = tuple[long: string, short: string]
 proc longAndShortFlag(name1: string, name2: string): FlagNames =
@@ -282,9 +281,7 @@ proc option*(
         default = some("default.txt"),
         help = "Output file",
         completionsGenerator = [
-          ShellCompletionKind.Bash: "compgen -f",
-          ShellCompletionKind.Zsh: "compadd -- *(.)",
-          ShellCompletionKind.Fish: "__fish_complete_path",
+          ShellCompletionKind.sckFish: "__fish_complete_path",
         ],
       )
       option(
@@ -293,9 +290,7 @@ proc option*(
         env = "MYAPP_PID",
         help = "Process ID",
         completionsGenerator = [
-          ShellCompletionKind.Bash: "compgen -A pid",
-          ShellCompletionKind.Zsh: "compadd -- ${(ps -Ao pid)}",
-          ShellCompletionKind.Fish: "__fish_complete_pids",
+          ShellCompletionKind.sckFish: "__fish_complete_pids",
         ],
       )
 

@@ -15,12 +15,8 @@ import os
 export os
 import sets
 
-import ./macrohelp
-import ./filler
-import ./types
-export types
-import ./util
-import ./shellcompletion/shellcompletion
+import argparse/[util,types,filler,macrohelp]
+import argparse/shellcompletion/shellcompletion
 
 type ParseState* = object
   tokens*: seq[string]
@@ -287,7 +283,7 @@ proc raiseShortCircuit*(flagname: string, help: string) {.inline.} =
 proc parseProcDef*(b: Builder): NimNode =
   ## Generate the parse proc for this Builder
   ##
-  ## proc parse(p: MyParser, args: seq[string]): MyOpts =
+  ## `proc parse(p: MyParser, args: seq[string]): MyOpts =`
   result = newStmtList()
 
   let parserIdent = b.parserIdent()
