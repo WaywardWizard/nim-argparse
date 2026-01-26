@@ -25,8 +25,14 @@
   <div class="document" id="documentId">
     <div class="container">
       <h1 class="title">Index</h1>
-      Modules: <a href="argparse.html">argparse</a>, <a href="argparse/backend.html">argparse/backend</a>, <a href="argparse/filler.html">argparse/filler</a>, <a href="argparse/macrohelp.html">argparse/macrohelp</a>, <a href="argparse/shellcompletion/fish.html">argparse/shellcompletion/fish</a>, <a href="argparse/types.html">argparse/types</a>, <a href="argparse/util.html">argparse/util</a>.<br/><p /><h2>API symbols</h2>
-<dl><dt><a name="add" href="#add"><span>add:</span></a></dt><dd><ul class="simple">
+      Modules: <a href="argparse.html">argparse</a>, <a href="argparse/backend.html">argparse/backend</a>, <a href="argparse/filler.html">argparse/filler</a>, <a href="argparse/macrohelp.html">argparse/macrohelp</a>, <a href="argparse/shellcompletion/fish.html">argparse/shellcompletion/fish</a>, <a href="argparse/shellcompletion/shellcompletion.html">argparse/shellcompletion/shellcompletion</a>, <a href="argparse/types.html">argparse/types</a>, <a href="argparse/util.html">argparse/util</a>.<br/><p /><h2>API symbols</h2>
+<dl><dt><a name="%60%24%60" href="#%60%24%60"><span>`$`:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc `$`(b: Builder): string" href="argparse/backend.html#%24%2CBuilder">backend: proc `$`(b: Builder): string</a></li>
+          <li><a class="reference external"
+          data-doc-search-tag="backend: proc `$`(state: ref ParseState): string" href="argparse/backend.html#%24%2Cref.ParseState">backend: proc `$`(state: ref ParseState): string</a></li>
+          </ul></dd>
+<dt><a name="add" href="#add"><span>add:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="macrohelp: proc add(n: ref UnfinishedCase; opt: int; body: NimNode)" href="argparse/macrohelp.html#add%2Cref.UnfinishedCase%2Cint%2CNimNode">macrohelp: proc add(n: ref UnfinishedCase; opt: int; body: NimNode)</a></li>
           <li><a class="reference external"
@@ -39,6 +45,10 @@
           data-doc-search-tag="macrohelp: proc add(n: ref UnfinishedCase; opt: string; body: NimNode)" href="argparse/macrohelp.html#add%2Cref.UnfinishedCase%2Cstring%2CNimNode">macrohelp: proc add(n: ref UnfinishedCase; opt: string; body: NimNode)</a></li>
           <li><a class="reference external"
           data-doc-search-tag="macrohelp: proc add(n: ref UnfinishedIf; cond: NimNode; body: NimNode)" href="argparse/macrohelp.html#add%2Cref.UnfinishedIf%2CNimNode%2CNimNode">macrohelp: proc add(n: ref UnfinishedIf; cond: NimNode; body: NimNode)</a></li>
+          </ul></dd>
+<dt><a name="add_command" href="#add_command"><span>add_command:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc add_command(name: string; group: string; content: proc ())" href="argparse/backend.html#add_command%2Cstring%2Cstring%2Cproc%29">backend: proc add_command(name: string; group: string; content: proc ())</a></li>
           </ul></dd>
 <dt><a name="addElse" href="#addElse"><span>addElse:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -54,8 +64,18 @@
                isref: bool = false)" href="argparse/macrohelp.html#addObjectField%2CUnfinishedObjectTypeDef%2Cstring%2Cstring%2Cbool">macrohelp: proc addObjectField(objtypedef: UnfinishedObjectTypeDef; name: string; kind: string;
                isref: bool = false)</a></li>
           </ul></dd>
+<dt><a name="addParser" href="#addParser"><span>addParser:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc addParser(name: string; group: string; content: proc ()): Builder" href="argparse/backend.html#addParser%2Cstring%2Cstring%2Cproc%29">backend: proc addParser(name: string; group: string; content: proc ()): Builder</a></li>
+          </ul></dd>
+<dt><a name="add_runProc" href="#add_runProc"><span>add_runProc:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc add_runProc(body: NimNode)" href="argparse/backend.html#add_runProc%2CNimNode">backend: proc add_runProc(body: NimNode)</a></li>
+          </ul></dd>
 <dt><a name="allChildren" href="#allChildren"><span>allChildren:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
+          data-doc-search-tag="backend: proc allChildren(builder: Builder): seq[Builder]" href="argparse/backend.html#allChildren%2CBuilder">backend: proc allChildren(builder: Builder): seq[Builder]</a></li>
+          <li><a class="reference external"
           data-doc-search-tag="fish: proc allChildren(builder: Builder): seq[Builder]" href="argparse/shellcompletion/fish.html#allChildren%2CBuilder">fish: proc allChildren(builder: Builder): seq[Builder]</a></li>
           </ul></dd>
 <dt><a name="arg" href="#arg"><span>arg:</span></a></dt><dd><ul class="simple">
@@ -82,6 +102,10 @@
 <li><a class="reference external"
           data-doc-search-tag="types: ComponentKind.ArgOption" href="argparse/types.html#ArgOption">types: ComponentKind.ArgOption</a></li>
           </ul></dd>
+<dt><a name="ARGPARSE_STDOUT" href="#ARGPARSE_STDOUT"><span>ARGPARSE_STDOUT:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: var ARGPARSE_STDOUT" href="argparse/backend.html#ARGPARSE_STDOUT">backend: var ARGPARSE_STDOUT</a></li>
+          </ul></dd>
 <dt><a name="Builder" href="#Builder"><span>Builder:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="types: type Builder" href="argparse/types.html#Builder">types: type Builder</a></li>
@@ -89,6 +113,10 @@
 <dt><a name="BuilderObj" href="#BuilderObj"><span>BuilderObj:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="types: object BuilderObj" href="argparse/types.html#BuilderObj">types: object BuilderObj</a></li>
+          </ul></dd>
+<dt><a name="builderStack" href="#builderStack"><span>builderStack:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: var builderStack" href="argparse/backend.html#builderStack">backend: var builderStack</a></li>
           </ul></dd>
 <dt><a name="channels" href="#channels"><span>channels:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -104,9 +132,49 @@
           <li><a class="reference external"
           data-doc-search-tag="argparse: template command(name: string; content: untyped): untyped" href="argparse.html#command.t%2Cstring%2Cuntyped">argparse: template command(name: string; content: untyped): untyped</a></li>
           </ul></dd>
+<dt><a name="COMPLETION_FLAG" href="#COMPLETION_FLAG"><span>COMPLETION_FLAG:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_FLAG" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_FLAG">shellcompletion: const COMPLETION_FLAG</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_FLAG_VARNAME" href="#COMPLETION_FLAG_VARNAME"><span>COMPLETION_FLAG_VARNAME:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_FLAG_VARNAME" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_FLAG_VARNAME">shellcompletion: const COMPLETION_FLAG_VARNAME</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_HEADER" href="#COMPLETION_HEADER"><span>COMPLETION_HEADER:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_HEADER" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_HEADER">shellcompletion: const COMPLETION_HEADER</a></li>
+          </ul></dd>
 <dt><a name="COMPLETION_HEADER_FISH" href="#COMPLETION_HEADER_FISH"><span>COMPLETION_HEADER_FISH:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="fish: const COMPLETION_HEADER_FISH" href="argparse/shellcompletion/fish.html#COMPLETION_HEADER_FISH">fish: const COMPLETION_HEADER_FISH</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_LONG_FLAG" href="#COMPLETION_LONG_FLAG"><span>COMPLETION_LONG_FLAG:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_LONG_FLAG" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_LONG_FLAG">shellcompletion: const COMPLETION_LONG_FLAG</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_LONG_HELP" href="#COMPLETION_LONG_HELP"><span>COMPLETION_LONG_HELP:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_LONG_HELP" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_LONG_HELP">shellcompletion: const COMPLETION_LONG_HELP</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_OPT" href="#COMPLETION_OPT"><span>COMPLETION_OPT:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_OPT" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_OPT">shellcompletion: const COMPLETION_OPT</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_OPT_VARNAME" href="#COMPLETION_OPT_VARNAME"><span>COMPLETION_OPT_VARNAME:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_OPT_VARNAME" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_OPT_VARNAME">shellcompletion: const COMPLETION_OPT_VARNAME</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_SHELLS" href="#COMPLETION_SHELLS"><span>COMPLETION_SHELLS:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_SHELLS" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_SHELLS">shellcompletion: const COMPLETION_SHELLS</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_SHORT_FLAG" href="#COMPLETION_SHORT_FLAG"><span>COMPLETION_SHORT_FLAG:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_SHORT_FLAG" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_SHORT_FLAG">shellcompletion: const COMPLETION_SHORT_FLAG</a></li>
+          </ul></dd>
+<dt><a name="COMPLETION_SHORT_HELP" href="#COMPLETION_SHORT_HELP"><span>COMPLETION_SHORT_HELP:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: const COMPLETION_SHORT_HELP" href="argparse/shellcompletion/shellcompletion.html#COMPLETION_SHORT_HELP">shellcompletion: const COMPLETION_SHORT_HELP</a></li>
           </ul></dd>
 <dt><a name="Component" href="#Component"><span>Component:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -115,6 +183,18 @@
 <dt><a name="ComponentKind" href="#ComponentKind"><span>ComponentKind:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="types: enum ComponentKind" href="argparse/types.html#ComponentKind">types: enum ComponentKind</a></li>
+          </ul></dd>
+<dt><a name="consume" href="#consume"><span>consume:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc consume(state: ref ParseState; thing: ComponentKind)" href="argparse/backend.html#consume%2Cref.ParseState%2CComponentKind">backend: proc consume(state: ref ParseState; thing: ComponentKind)</a></li>
+          </ul></dd>
+<dt><a name="deriveShellFromEnvVar" href="#deriveShellFromEnvVar"><span>deriveShellFromEnvVar:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: proc deriveShellFromEnvVar(envVar: string): string" href="argparse/shellcompletion/shellcompletion.html#deriveShellFromEnvVar%2Cstring">shellcompletion: proc deriveShellFromEnvVar(envVar: string): string</a></li>
+          </ul></dd>
+<dt><a name="doUsageAssert" href="#doUsageAssert"><span>doUsageAssert:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: template doUsageAssert(condition: bool; msg: string): untyped" href="argparse/backend.html#doUsageAssert.t%2Cbool%2Cstring">backend: template doUsageAssert(condition: bool; msg: string): untyped</a></li>
           </ul></dd>
 <dt><a name="FillChannel" href="#FillChannel"><span>FillChannel:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -136,11 +216,23 @@
 <li><a class="reference external"
           data-doc-search-tag="filler: proc generate(filler; containerName: string): NimNode" href="argparse/filler.html#generate%2C%2Cstring">filler: proc generate(filler; containerName: string): NimNode</a></li>
           </ul></dd>
+<dt><a name="generateDefs" href="#generateDefs"><span>generateDefs:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc generateDefs(builder: Builder): NimNode" href="argparse/backend.html#generateDefs%2CBuilder">backend: proc generateDefs(builder: Builder): NimNode</a></li>
+          </ul></dd>
+<dt><a name="GenResponse" href="#GenResponse"><span>GenResponse:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: tuple GenResponse" href="argparse/backend.html#GenResponse">backend: tuple GenResponse</a></li>
+          </ul></dd>
 <dt><a name="getFishShellCompletionsTemplate" href="#getFishShellCompletionsTemplate"><span>getFishShellCompletionsTemplate:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="fish: proc getFishShellCompletionsTemplate(b: Builder; allSubcommandsPre: Option[
     HashSet[string]] = none[HashSet[string]]()): seq[string]" href="argparse/shellcompletion/fish.html#getFishShellCompletionsTemplate%2CBuilder%2COption%5BHashSet%5Bstring%5D%5D">fish: proc getFishShellCompletionsTemplate(b: Builder; allSubcommandsPre: Option[
     HashSet[string]] = none[HashSet[string]]()): seq[string]</a></li>
+          </ul></dd>
+<dt><a name="getHelpText" href="#getHelpText"><span>getHelpText:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc getHelpText(b: Builder): string" href="argparse/backend.html#getHelpText%2CBuilder">backend: proc getHelpText(b: Builder): string</a></li>
           </ul></dd>
 <dt><a name="getInsertionPoint" href="#getInsertionPoint"><span>getInsertionPoint:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -153,6 +245,10 @@
 <dt><a name="getRootBuilder" href="#getRootBuilder"><span>getRootBuilder:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="util: proc getRootBuilder(b: Builder): Builder" href="argparse/util.html#getRootBuilder%2CBuilder">util: proc getRootBuilder(b: Builder): Builder</a></li>
+          </ul></dd>
+<dt><a name="getShortCircuitBehaviourImpl" href="#getShortCircuitBehaviourImpl"><span>getShortCircuitBehaviourImpl:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="shellcompletion: proc getShortCircuitBehaviourImpl(b: Builder): NimNode" href="argparse/shellcompletion/shellcompletion.html#getShortCircuitBehaviourImpl%2CBuilder">shellcompletion: proc getShortCircuitBehaviourImpl(b: Builder): NimNode</a></li>
           </ul></dd>
 <dt><a name="hasElse" href="#hasElse"><span>hasElse:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -169,6 +265,10 @@
 <dt><a name="help" href="#help"><span>help:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="argparse: proc help(helptext: string)" href="argparse.html#help%2Cstring">argparse: proc help(helptext: string)</a></li>
+          </ul></dd>
+<dt><a name="helpProcDef" href="#helpProcDef"><span>helpProcDef:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc helpProcDef(b: Builder): NimNode" href="argparse/backend.html#helpProcDef%2CBuilder">backend: proc helpProcDef(b: Builder): NimNode</a></li>
           </ul></dd>
 <dt><a name="hideCompletions" href="#hideCompletions"><span>hideCompletions:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -196,6 +296,10 @@
 <li><a class="reference external"
           data-doc-search-tag="filler: proc newArgFiller(): ref ArgFiller" href="argparse/filler.html#newArgFiller">filler: proc newArgFiller(): ref ArgFiller</a></li>
           </ul></dd>
+<dt><a name="newBuilder" href="#newBuilder"><span>newBuilder:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc newBuilder(name = &quot;&quot;): Builder" href="argparse/backend.html#newBuilder%2Cstring">backend: proc newBuilder(name = &quot;&quot;): Builder</a></li>
+          </ul></dd>
 <dt><a name="newCaseStatement" href="#newCaseStatement"><span>newCaseStatement:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="macrohelp: proc newCaseStatement(key: NimNode): ref UnfinishedCase" href="argparse/macrohelp.html#newCaseStatement%2CNimNode">macrohelp: proc newCaseStatement(key: NimNode): ref UnfinishedCase</a></li>
@@ -219,6 +323,10 @@
           data-doc-search-tag="argparse: template newParser(name: string; body: untyped): untyped" href="argparse.html#newParser.t%2Cstring%2Cuntyped">argparse: template newParser(name: string; body: untyped): untyped</a></li>
           <li><a class="reference external"
           data-doc-search-tag="argparse: template newParser(body: untyped): untyped" href="argparse.html#newParser.t%2Cuntyped">argparse: template newParser(body: untyped): untyped</a></li>
+          </ul></dd>
+<dt><a name="newParseState" href="#newParseState"><span>newParseState:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc newParseState(args: openArray[string]): ref ParseState" href="argparse/backend.html#newParseState%2CopenArray%5Bstring%5D">backend: proc newParseState(args: openArray[string]): ref ParseState</a></li>
           </ul></dd>
 <dt><a name="nimRepr" href="#nimRepr"><span>nimRepr:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -254,15 +362,43 @@
 <li><a class="reference external"
           data-doc-search-tag="filler: proc optional(filler; argname: string)" href="argparse/filler.html#optional%2C%2Cstring">filler: proc optional(filler; argname: string)</a></li>
           </ul></dd>
+<dt><a name="optsTypeDef" href="#optsTypeDef"><span>optsTypeDef:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc optsTypeDef(b: Builder): NimNode" href="argparse/backend.html#optsTypeDef%2CBuilder">backend: proc optsTypeDef(b: Builder): NimNode</a></li>
+          </ul></dd>
 <dt><a name="parentOf" href="#parentOf"><span>parentOf:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="macrohelp: proc parentOf(node: NimNode; child: NimNode): InsertionPoint" href="argparse/macrohelp.html#parentOf%2CNimNode%2CNimNode">macrohelp: proc parentOf(node: NimNode; child: NimNode): InsertionPoint</a></li>
           <li><a class="reference external"
           data-doc-search-tag="macrohelp: proc parentOf(node: NimNode; name: string): InsertionPoint" href="argparse/macrohelp.html#parentOf%2CNimNode%2Cstring">macrohelp: proc parentOf(node: NimNode; name: string): InsertionPoint</a></li>
           </ul></dd>
+<dt><a name="parseProcDef" href="#parseProcDef"><span>parseProcDef:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc parseProcDef(b: Builder): NimNode" href="argparse/backend.html#parseProcDef%2CBuilder">backend: proc parseProcDef(b: Builder): NimNode</a></li>
+          </ul></dd>
 <dt><a name="parserIdent" href="#parserIdent"><span>parserIdent:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="util: proc parserIdent(b: Builder): NimNode" href="argparse/util.html#parserIdent%2CBuilder">util: proc parserIdent(b: Builder): NimNode</a></li>
+          </ul></dd>
+<dt><a name="parserTypeDef" href="#parserTypeDef"><span>parserTypeDef:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc parserTypeDef(b: Builder): NimNode" href="argparse/backend.html#parserTypeDef%2CBuilder">backend: proc parserTypeDef(b: Builder): NimNode</a></li>
+          </ul></dd>
+<dt><a name="ParseState" href="#ParseState"><span>ParseState:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: object ParseState" href="argparse/backend.html#ParseState">backend: object ParseState</a></li>
+          </ul></dd>
+<dt><a name="popleft" href="#popleft"><span>popleft:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc popleft[T](s: var seq[T]): T" href="argparse/backend.html#popleft%2Cseq%5BT%5D">backend: proc popleft[T](s: var seq[T]): T</a></li>
+          </ul></dd>
+<dt><a name="popright" href="#popright"><span>popright:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc popright[T](s: var seq[T]; n = 0): T" href="argparse/backend.html#popright%2Cseq%5BT%5D%2Cint">backend: proc popright[T](s: var seq[T]; n = 0): T</a></li>
+          </ul></dd>
+<dt><a name="raiseShortCircuit" href="#raiseShortCircuit"><span>raiseShortCircuit:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc raiseShortCircuit(flagname: string; help: string)" href="argparse/backend.html#raiseShortCircuit%2Cstring%2Cstring">backend: proc raiseShortCircuit(flagname: string; help: string)</a></li>
           </ul></dd>
 <dt><a name="replace" href="#replace"><span>replace:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -288,6 +424,12 @@
 <li><a class="reference external"
           data-doc-search-tag="types: ShellCompletionKind.sckFish" href="argparse/types.html#sckFish">types: ShellCompletionKind.sckFish</a></li>
           </ul></dd>
+<dt><a name="setOrAdd" href="#setOrAdd"><span>setOrAdd:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc setOrAdd(x: var seq[string]; val: string)" href="argparse/backend.html#setOrAdd%2Cseq%5Bstring%5D%2Cstring">backend: proc setOrAdd(x: var seq[string]; val: string)</a></li>
+          <li><a class="reference external"
+          data-doc-search-tag="backend: proc setOrAdd(x: var string; val: string)" href="argparse/backend.html#setOrAdd%2Cstring%2Cstring">backend: proc setOrAdd(x: var string; val: string)</a></li>
+          </ul></dd>
 <dt><a name="ShellCompletionKind" href="#ShellCompletionKind"><span>ShellCompletionKind:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="types: enum ShellCompletionKind" href="argparse/types.html#ShellCompletionKind">types: enum ShellCompletionKind</a></li>
@@ -296,9 +438,17 @@
 <li><a class="reference external"
           data-doc-search-tag="types: object ShortCircuit" href="argparse/types.html#ShortCircuit">types: object ShortCircuit</a></li>
           </ul></dd>
+<dt><a name="skip" href="#skip"><span>skip:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc skip(state: ref ParseState)" href="argparse/backend.html#skip%2Cref.ParseState">backend: proc skip(state: ref ParseState)</a></li>
+          </ul></dd>
 <dt><a name="SlotKind" href="#SlotKind"><span>SlotKind:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="filler: enum SlotKind" href="argparse/filler.html#SlotKind">filler: enum SlotKind</a></li>
+          </ul></dd>
+<dt><a name="toVarname" href="#toVarname"><span>toVarname:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="backend: proc toVarname(x: string): string" href="argparse/backend.html#toVarname%2Cstring">backend: proc toVarname(x: string): string</a></li>
           </ul></dd>
 <dt><a name="UnfinishedCase" href="#UnfinishedCase"><span>UnfinishedCase:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -328,7 +478,7 @@
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2026-01-12 22:15:59 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2026-01-26 01:59:30 UTC</small>
       </div>
     </div>
   </div>
