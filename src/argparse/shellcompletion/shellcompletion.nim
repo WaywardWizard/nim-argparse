@@ -1,4 +1,4 @@
-## .. importdoc:: ../backend
+## .. importdoc:: ../backend, ../types
 ## # Architecture
 ## ## Compiletime
 ## - Hooks added to `argparse/backend module`_

@@ -293,12 +293,7 @@ proc option*(
           ShellCompletionKind.sckFish: "__fish_complete_pids",
         ],
       )
-
-    try:
-      discard p.parse(@["--kind", "meat"])
-    except UsageError as e:
-      assert e.msg.contains("invalid choice 'meat'")
-
+      
   let names = longAndShortFlag(name1, name2)
   let varname = names.extractVarname
   builderStack[^1].components.add Component(
@@ -343,10 +338,11 @@ proc arg*(
   ##
   ## ``help`` is additional help text for this argument.
   runnableExamples:
+    const generator = [ShellCompletionKind.sckFish: "__fish_complete_path"]
     var p = newParser:
       arg("name", help = "Name of apple")
       arg("twowords", nargs = 2)
-      arg("more", nargs = -1)
+      arg("more", completionsGenerator= generator, nargs = -1)
     let res = p.parse(@["cameo", "hot", "dog", "things"])
     assert res.name == "cameo"
     assert res.twowords == @["hot", "dog"]

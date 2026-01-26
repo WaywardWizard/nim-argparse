@@ -147,9 +147,9 @@ proc popright*[T](s: var seq[T], n = 0): T =
 proc identDef(varname: NimNode, vartype: NimNode): NimNode =
   ## Return a property definition for an object.
   ##
-  ## type
+  ## ```type
   ##   Foo = object
-  ##     varname*: vartype <-- this is the AST being returned
+  ##     `varname*: vartype` # <-- this is the AST being returned````
   return nnkIdentDefs.newTree(
     nnkPostfix.newTree(ident("*"), varname), vartype, newEmptyNode()
   )
@@ -158,9 +158,9 @@ proc propDefinitions(c: Component): seq[NimNode] =
   ## Return the type of this component as will be put in the
   ## parser return type object definition
   ##
-  ## type
+  ## ```type
   ##   Foo = object
-  ##     name*: string <-- this is the AST being returned
+  ##     name*: string # <-- this is the AST being returned````
   let varname = ident(c.varname.safeIdentStr)
   case c.kind
   of ArgFlag:
